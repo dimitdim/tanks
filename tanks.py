@@ -39,6 +39,8 @@ class Tanks_Model:
     def __init__(self):
         self.phase=1 # Decides whose gets to move first.
         self.terrain=[]
+        variance=10
+        last_height=0
         for x in range(640):
             new_dx=Terrain_dx(x,0,random.randint(10,200))
             self.terrain.append(new_dx)
