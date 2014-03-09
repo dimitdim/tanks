@@ -37,7 +37,7 @@ class Player:
         self=self
         self.height=10
         self.width=10
-        self.y=20
+        self.y=0
         self.vx=0
         if number==0:
             self.x=40
@@ -64,23 +64,26 @@ class Tanks_Model:
         self.terrain=[]
         self.tanks=[]
         self.projectile=Projectile(0,0,10,(255,0,0))
-        variance=10
-        last_height=0
         self.width=10
+        self.num_players=2
+        self.wind=-.01
+        self.gravity=.02
         height=200
-        for x in range(int(screen_width/self.width)):
         self.draw_projectile=False
-            height=height+random.randint(0,0)
-            new_dx=Terrain_dx(x*self.width,height,self.width,height)
+        for x in range(int(screen_width/self.width)):
+            height=height+random.randint(-10,10)
+            new_dx=Terrain_dx(x*self.width,screen_height-height,self.width,height)
             self.terrain.append(new_dx)
-        for x in range(2):
+        for x in range(self.num_players):
             self.tanks.append(Player(x))
         
     def update(self):
         for tank in self.tanks:
             tank.x+=tank.vx
+            if tank.x>(screen_width-self.width): tank.x=(screen_width-self.width)
+            elif tank.x<0: tank.x=0
             tank.y=self.terrain[int((tank.x/self.width))].height-10
-            self.projectile.move_projectile(-.01,.02) #Postive ax is to the right, positive y is down.
+        self.projectile.move_projectile(self.wind,self.gravity) #Postive ax is to the right, positive y is down.
         return
 
 class PyGameView:
@@ -103,17 +106,26 @@ class Controller:
         self.model=model
         
     def handle_pygame_event(self,event):
-        if event.type != KEYDOWN:
+        if event.type == KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                self.model.draw_projectile=True
+                self.model.projectile.x=100
+                self.model.projectile.y=200
+                self.model.projectile.vx=2
+                self.model.projectile.vy=-2 #define this negative because of how the coordinate system works.
+            elif event.key == pygame.K_LEFT:
+                self.model.tanks[self.model.phase].vx=-1.0
+            elif event.key == pygame.K_RIGHT:
+                self.model.tanks[self.model.phase].vx=1.0
+            else: return
+        elif event.type == KEYUP:
+            if event.key == pygame.K_LEFT:
+                self.model.tanks[self.model.phase].vx=0.0
+            elif event.key == pygame.K_RIGHT:
+                self.model.tanks[self.model.phase].vx=0.0
+            else:  return
+        else:
             return
-        elif event.key == pygame.K_SPACE:
-            self.model.draw_projectile=True
-            self.model.projectile.x=100
-            self.model.projectile.y=200
-            self.model.projectile.vx=2
-            self.model.projectile.vy=-2 #define this negative because of how the coordinate system works.
-         elif event.key == pygame.K_LEFT:
-            self.model.tanks[self.model.phase].vx=10.0
-        else: return
 
            
 if __name__ == '__main__':
