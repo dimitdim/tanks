@@ -13,14 +13,24 @@ import time
 
 class Projectile:
     """Encapsulates state variables for a projectile"""
-    def __init__(self,x,y,radius,blast_radius,color,child_projectile,spawn_delay):
+    def __init__(self,x,y,size,color):
         self.x=x
         self.y=y
-        self.radius=radius
-        self.blast_radius=blast_radius
+        self.vx=0
+        self.vy=0
+        self.size=size
         self.color=color
-        self.spawn_delay=spawn_delay #Some forward thinking for varied projectiles
-        self.child_projectile=child_projectile #Amount of projectiles spawned
+
+    def move_projectile(self,ax,ay):
+        """
+        Takes the component velocities and component accelerations,
+        and returns delta x,y and change in velocity x,y        
+        """
+        self.x+=self.vx
+        self.y+=self.vy
+        self.vx+=ax
+        self.vy+=ay
+    
 
 class Player:
     def __init__(self,number):
@@ -62,6 +72,8 @@ class Tanks_Model:
             self.terrain.append(new_dx)
         for x in range(2):
             self.tanks.append(Player(x))
+        self.projectile=Projectile(0,0,3,(255,0,0))
+        draw_projectile=False
     def update(self):
         for tank in self.tanks:
             tank.y=self.terrain[(tank.x/self.width)].height-10
@@ -79,6 +91,8 @@ class PyGameView:
             pygame.draw.rect(self.screen,dx.color,(dx.x,dx.height,dx.width,dx.height))
         for tank in self.model.tanks:
             pygame.draw.rect(self.screen,tank.color,(tank.x,tank.y,tank.width,tank.height))
+            pygame.draw.rect(self.screen,pygame.Color(255,255,255),pygame.Rect(dx.x,480-dx.height,dx.width,dx.height))
+        #pygame.draw.rect(self.screen,pygame.Color(128,128,128),py)
         pygame.display.update()
 
 class Controller:
@@ -86,7 +100,10 @@ class Controller:
         self.model=model
         
     def handle_pygame_event(self,event):
-        return
+        if event.type != KEYDOWN:
+            return
+        if event.key == pygame.K_SPACE:
+            self.model.draw_projectile=True
 
 if __name__ == '__main__':
     pygame.init()
