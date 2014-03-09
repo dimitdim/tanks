@@ -28,11 +28,12 @@ class Player:
 
 class Terrain_dx:
     """Definition for one dx of the terrain.  Terrain is generated from lots of thin slits."""
-    def __init__(self,x,y,height):
+    def __init__(self,x,y,width,height):
         self.x=x
         self.y=y
+        self.width=width
         self.height=height
-        
+
 
 class Tanks_Model:
     """Encodes the game state"""
@@ -41,9 +42,13 @@ class Tanks_Model:
         self.terrain=[]
         variance=10
         last_height=0
-        for x in range(640):
-            new_dx=Terrain_dx(x,0,random.randint(10,200))
+        width=10
+        for x in range(640/width):
+            height=random.randint(200,200)
+            new_dx=Terrain_dx(x*width,480-height,width,height)
             self.terrain.append(new_dx)
+    def update(self):
+        return
             
 class PyGameView:
     """Renders model data to the window"""
@@ -51,12 +56,12 @@ class PyGameView:
         self.model = model
         self.screen = screen
     
-    def draw (self):
+    def draw(self):
         self.screen.fill(pygame.Color(0,0,0))
         for dx in self.model.terrain:
-            pygame.draw.rect(self.screen,pygame.Color(255,255,255),pygame.Rect(dx.x,480-dx.height,1,dx.height))
-            print('dx')
+            pygame.draw.rect(self.screen,pygame.Color(255,255,255),pygame.Rect(dx.x,480-dx.height,dx.width,dx.height))
         pygame.display.update()
+
 class Controller:
     def __init__(self,model):
         self.model=model
@@ -77,7 +82,7 @@ if __name__ == '__main__':
                 if event.type == QUIT:
                     running = False
                 controller.handle_pygame_event(event)
-            #model.update()
+            model.update()
             view.draw()
             time.sleep(.001)
         pygame.quit()
