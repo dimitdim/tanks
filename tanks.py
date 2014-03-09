@@ -16,8 +16,8 @@ class Projectile:
     def __init__(self,x,y,size,color):
         self.x=x
         self.y=y
-        self.vx=0
-        self.vy=0
+        self.vx=0.0
+        self.vy=0.0
         self.size=size
         self.color=color
 
@@ -63,22 +63,24 @@ class Tanks_Model:
         self.phase=0 # Decides whose gets to move first.
         self.terrain=[]
         self.tanks=[]
+        self.projectile=Projectile(0,0,10,(255,0,0))
         variance=10
         last_height=0
         self.width=10
         height=200
         for x in range(int(screen_width/self.width)):
+        self.draw_projectile=False
             height=height+random.randint(0,0)
             new_dx=Terrain_dx(x*self.width,height,self.width,height)
             self.terrain.append(new_dx)
         for x in range(2):
             self.tanks.append(Player(x))
-        self.projectile=Projectile(0,0,3,(255,0,0))
-        draw_projectile=False
+        
     def update(self):
         for tank in self.tanks:
             tank.x+=tank.vx
             tank.y=self.terrain[int((tank.x/self.width))].height-10
+            self.projectile.move_projectile(-.01,.02) #Postive ax is to the right, positive y is down.
         return
 
 class PyGameView:
@@ -92,7 +94,8 @@ class PyGameView:
             pygame.draw.rect(self.screen,dx.color,(dx.x,dx.height,dx.width,dx.height))
         for tank in self.model.tanks:
             pygame.draw.rect(self.screen,tank.color,(tank.x,tank.y,tank.width,tank.height))
-        #pygame.draw.rect(self.screen,pygame.Color(128,128,128),py)
+        if self.model.draw_projectile==True:   
+            pygame.draw.rect(self.screen,pygame.Color(128,128,128),pygame.Rect(model.projectile.x,model.projectile.y,model.projectile.size,model.projectile.size))
         pygame.display.update()
 
 class Controller:
@@ -104,10 +107,15 @@ class Controller:
             return
         elif event.key == pygame.K_SPACE:
             self.model.draw_projectile=True
-        elif event.key == pygame.K_LEFT:
+            self.model.projectile.x=100
+            self.model.projectile.y=200
+            self.model.projectile.vx=2
+            self.model.projectile.vy=-2 #define this negative because of how the coordinate system works.
+         elif event.key == pygame.K_LEFT:
             self.model.tanks[self.model.phase].vx=10.0
         else: return
 
+           
 if __name__ == '__main__':
     pygame.init()
     screen_width = 640
