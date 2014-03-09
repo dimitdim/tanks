@@ -38,6 +38,7 @@ class Player:
         self.height=10
         self.width=10
         self.y=20
+        self.vx=0
         if number==0:
             self.x=40
             self.color=(255,0,0)
@@ -58,17 +59,17 @@ class Terrain_dx:
 
 class Tanks_Model:
     """Encodes the game state"""
-    def __init__(self):
-        self.phase=1 # Decides whose gets to move first.
+    def __init__(self,screen_width,screen_height):
+        self.phase=0 # Decides whose gets to move first.
         self.terrain=[]
         self.tanks=[]
         variance=10
         last_height=0
         self.width=10
         height=200
-        for x in range(640/self.width):
+        for x in range(int(screen_width/self.width)):
             height=height+random.randint(0,0)
-            new_dx=Terrain_dx(x*self.width,480-height,self.width,height)
+            new_dx=Terrain_dx(x*self.width,height,self.width,height)
             self.terrain.append(new_dx)
         for x in range(2):
             self.tanks.append(Player(x))
@@ -76,7 +77,8 @@ class Tanks_Model:
         draw_projectile=False
     def update(self):
         for tank in self.tanks:
-            tank.y=self.terrain[(tank.x/self.width)].height-10
+            tank.x+=tank.vx
+            tank.y=self.terrain[int((tank.x/self.width))].height-10
         return
 
 class PyGameView:
@@ -84,14 +86,12 @@ class PyGameView:
     def __init__(self,model,screen):
         self.model = model
         self.screen = screen
-    
     def draw(self):
         self.screen.fill(pygame.Color(0,0,0))
         for dx in self.model.terrain:
             pygame.draw.rect(self.screen,dx.color,(dx.x,dx.height,dx.width,dx.height))
         for tank in self.model.tanks:
             pygame.draw.rect(self.screen,tank.color,(tank.x,tank.y,tank.width,tank.height))
-            pygame.draw.rect(self.screen,pygame.Color(255,255,255),pygame.Rect(dx.x,480-dx.height,dx.width,dx.height))
         #pygame.draw.rect(self.screen,pygame.Color(128,128,128),py)
         pygame.display.update()
 
@@ -102,14 +102,19 @@ class Controller:
     def handle_pygame_event(self,event):
         if event.type != KEYDOWN:
             return
-        if event.key == pygame.K_SPACE:
+        elif event.key == pygame.K_SPACE:
             self.model.draw_projectile=True
+        elif event.key == pygame.K_LEFT:
+            self.model.tanks[self.model.phase].vx=10.0
+        else: return
 
 if __name__ == '__main__':
     pygame.init()
-    size=(640,480)
-    screen=pygame.display.set_mode(size)
-    model = Tanks_Model()
+    screen_width = 640
+    screen_height = 480
+    size = (screen_width,screen_height)
+    screen = pygame.display.set_mode(size)
+    model = Tanks_Model(screen_width,screen_height)
     view = PyGameView(model,screen)
     controller = Controller(model)
     running = True
