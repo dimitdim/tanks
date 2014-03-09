@@ -59,17 +59,20 @@ class Terrain_dx:
 
 class Tanks_Model:
     """Encodes the game state"""
-    def __init__(self,screen_width,screen_height):
-        self.phase=0 # Decides whose gets to move first.
+    def __init__(self,screen_width,screen_height,wind,gravity):
+        self.phase=1 # Decides which tank is active.
         self.terrain=[]
         self.tanks=[]
         self.projectile=Projectile(0,0,10,(255,0,0))
         self.width=10
         self.num_players=2
-        self.wind=-.01
-        self.gravity=.02
+        self.wind=wind
+        self.gravity=gravity
         height=200
+        
         self.draw_projectile=False
+        self.draw_mouse=False #For the purpose of drawing the targetting cursor
+        self.last_mouse=(0,0) #Marks the initial mousedown location to help the user target
         for x in range(int(screen_width/self.width)):
             height=height+random.randint(-10,10)
             new_dx=Terrain_dx(x*self.width,screen_height-height,self.width,height)
@@ -99,6 +102,10 @@ class PyGameView:
             pygame.draw.rect(self.screen,tank.color,(tank.x,tank.y,tank.width,tank.height))
         if self.model.draw_projectile==True:   
             pygame.draw.rect(self.screen,pygame.Color(128,128,128),pygame.Rect(model.projectile.x,model.projectile.y,model.projectile.size,model.projectile.size))
+        if self.model.draw_mouse==True:
+            pygame.draw.rect(self.screen,pygame.Color(200,200,200,),pygame.Rect(pygame.mouse.get_pos()[0]-25,pygame.mouse.get_pos()[1],50,3))
+            pygame.draw.rect(self.screen,pygame.Color(200,200,200,),pygame.Rect(pygame.mouse.get_pos()[0],pygame.mouse.get_pos()[1]-25,3,50))
+            pygame.draw.rect(self.screen,pygame.Color(0,255,0,),pygame.Rect(self.model.last_mouse[0],self.model.last_mouse[1],10,10))
         pygame.display.update()
 
 class Controller:
@@ -106,14 +113,32 @@ class Controller:
         self.model=model
         
     def handle_pygame_event(self,event):
+        """
+        Mouse event handling is for determining shooting power.
+        """
+        if event.type == MOUSEBUTTONDOWN:
+            self.model.draw_mouse=True
+            self.i_pos=pygame.mouse.get_pos()
+            self.model.last_mouse=self.i_pos
+        elif event.type == MOUSEBUTTONUP:
+            self.f_pos=pygame.mouse.get_pos()
+            self.model.draw_projectile=True
+            self.model.projectile.x=self.model.tanks[self.model.phase].x-10
+            self.model.projectile.y=self.model.tanks[self.model.phase].y-10
+            self.model.projectile.vx=0.05*(self.f_pos[0]-self.i_pos[0])
+            self.model.projectile.vy=0.05*(self.f_pos[1]-self.i_pos[1])
+            self.model.draw_mouse=False
+            
         if event.type == KEYDOWN:
+            """
             if event.key == pygame.K_SPACE:
                 self.model.draw_projectile=True
-                self.model.projectile.x=100
-                self.model.projectile.y=200
+                self.model.projectile.x=self.model.tanks[self.model.phase].x-10
+                self.model.projectile.y=self.model.tanks[self.model.phase].y-10
                 self.model.projectile.vx=2
                 self.model.projectile.vy=-2 #define this negative because of how the coordinate system works.
-            elif event.key == pygame.K_LEFT:
+            """
+            if event.key == pygame.K_LEFT:
                 self.model.tanks[self.model.phase].vx=-1.0
             elif event.key == pygame.K_RIGHT:
                 self.model.tanks[self.model.phase].vx=1.0
@@ -134,7 +159,7 @@ if __name__ == '__main__':
     screen_height = 480
     size = (screen_width,screen_height)
     screen = pygame.display.set_mode(size)
-    model = Tanks_Model(screen_width,screen_height)
+    model = Tanks_Model(screen_width,screen_height,0.0,0.075)#the constants initalize gravity and wind.
     view = PyGameView(model,screen)
     controller = Controller(model)
     running = True
